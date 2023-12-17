@@ -30,11 +30,6 @@ ff = FFmpeg(
                 -map [outv]:v -map 0:a -b:a {AUDIO_BITRATE} -b:v {VIDEO_BITRATE}'}
 )
 
-# ff = FFmpeg(
-#     inputs={'test_files/primary.mp4': '-y'},
-#     outputs={'output.mp4': f'-vf "scale=-2:{math.trunc(OUTPUT_HEIGHT / 2)}, crop={OUTPUT_WIDTH}:ih"'}
-# )
-
 print(ff.cmd)
 
 ff.run()
