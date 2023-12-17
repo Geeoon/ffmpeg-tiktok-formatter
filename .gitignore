@@ -1,3 +1,4 @@
 .venv
 src/test_files/*
 src/output.mp4
+src/*.mp3
