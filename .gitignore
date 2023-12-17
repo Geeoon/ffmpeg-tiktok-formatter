@@ -1,2 +1,2 @@
 .venv
-./src/test_files
+src/test_files/*
