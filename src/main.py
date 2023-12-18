@@ -10,19 +10,19 @@ INPUT_FILE_DIRECTORY = "test_files"
 OUTPUT_FILE_NAME = 'output.mp4'
 PRIMARY_FILE_NAME= 'primary_speech.mp4'
 SECONDARY_FILE_NAME= 'secondary.mp4'
-VIDEO_BITRATE = '512k'
+VIDEO_BITRATE = '2M'
 AUDIO_BITRATE= '192k'
-ADDITIONAL_LENGTH = 300  # pixels of additional width/height for a primary video, can be negative
+ADDITIONAL_LENGTH = 0  # pixels of additional width/height for a primary video, can be negative
 NO_SPEECH_THRESHOLD = 0.4
 FONT_SIZE = 15
 OUTPUT_FPS = 30
-RENDERING_PRESET = 'ultrafast'
+RENDERING_PRESET = 'medium'
 
 
 # grab audio
 ff = FFmpeg(
     inputs={f'{INPUT_FILE_DIRECTORY}/{PRIMARY_FILE_NAME}': '-y'},
-    outputs={f'{PRIMARY_FILE_NAME[:-2]}_audio.mp3': '-q:a 0 -map a -preset ultrafast'}
+    outputs={f'{PRIMARY_FILE_NAME[:-2]}_audio.mp3': '-q:a 0 -map a -preset fast'}
 )
 ff.run()
 
@@ -71,4 +71,4 @@ print(ff.cmd)
 ff.run()
     
 # clean up
-os.unlink(srt_tmp.name)    
+os.unlink(srt_tmp.name)
