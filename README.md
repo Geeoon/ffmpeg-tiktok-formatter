@@ -44,3 +44,5 @@ This will create a simple vertical video with no subtitles.
 `-f, --font_size <size>` The subtitle font size.
 
 `--fps <frame_rate>` The output video frame rate.
+
+`--whisper_model <model>` The OpenAI Whisper model to use. Default is `base`.
