@@ -21,11 +21,11 @@ This will create a simple vertical video with no subtitles.
 ### Advanced Usage
 `main.py <primary_video> <secondary_video> [subtitle_path] [options]`
 
-`primary_video, required` The path to the primary video. This video will be the one used to make automatic subtitles and will be the output audio.
+`primary_video, required` The path to the primary video. This video will be the one used to make automatic subtitles and will be the output audio.  Must be an mp4.
 
-`secondary_video, required` The path to the secondary video.
+`secondary_video, required` The path to the secondary video.  Must be an mp4.
 
-`subtitle_path, optional` The path to the SRT subtitles file. If this is used, the `-a` flag will be ignored.
+`subtitle_path, optional` The path to the .srt subtitles file. If this is used, the `-a` flag will be ignored.
 
 `-h, --horizontal` Make a horizontally stacked video.
 
