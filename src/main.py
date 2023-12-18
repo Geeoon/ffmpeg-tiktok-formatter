@@ -22,7 +22,7 @@ MAX_WORDS_PER_LINE = 3  # 0 for default/off, 3 is good for short action events, 
 MODEL_NAME = 'base.en'
 IS_HORIZONTAL = True
 SUBTITLE_PATH = ''
-AUTOMATIC_SUBTITLES = False
+AUTOMATIC_SUBTITLES = True
 
 
 parser = argparse.ArgumentParser("video_formatter")
