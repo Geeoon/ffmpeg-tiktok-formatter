@@ -46,3 +46,5 @@ This will create a simple vertical video with no subtitles.
 `--fps <frame_rate>` The output video frame rate.
 
 `--whisper_model <model>` The OpenAI Whisper model to use. Default is `base`.
+
+`--max_words <number>` The maximum number of words per line when automatically generating subtitles.
