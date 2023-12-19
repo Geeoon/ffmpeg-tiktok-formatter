@@ -23,28 +23,29 @@ MODEL_NAME = 'base.en'
 IS_HORIZONTAL = True
 SUBTITLE_PATH = ''
 AUTOMATIC_SUBTITLES = True
+SWAP_VIDEOS = False
 
 
 parser = argparse.ArgumentParser("video_formatter")
 parser.add_argument('primary_video', help='The path to the primary video. This video will be the one used to make automatic subtitles and will be the output audio.  Must be an mp4.', type=str)
 parser.add_argument('secondary_video', help='The path to the secondary video.  Must be an mp4.', type=str)
-parser.add_argument('-l', '--subtitle_path', help='The path to the .srt subtitles file. If this is used, the `-a` flag will be ignored.', type=str, default='')
-parser.add_argument('-k', '--horizontal', help='Make a horizontally stacked video.', action='store_true')
+parser.add_argument('-s', '--subtitle_path', help='The path to the .srt subtitles file. If this is used, the `-a` flag will be ignored.', type=str, default='')
+parser.add_argument('-H', '--horizontal', help='Make a horizontally stacked video.', action='store_true')
 parser.add_argument('-a', '--automatic_subtitles', help='Automatically generate subtitles.', action='store_true')
 parser.add_argument('-o', '--offset', help='Offset primary video size by a number of pixels. Can be negative. If used with `-s`, it will control the secondary video.', type=int, default=0)
-parser.add_argument('-s', '--swap', help='Swap the primary and secondary vidoes, but keep everything else the same.', action='store_true')
-parser.add_argument('--video_bitrate', help='The bitrate of the ouput video. `2M` by default', type=str, default='2M')
-parser.add_argument('--audio_bitrate', help='The bitrate of the output audio. `192k` by default', type=str, default='192k')
-parser.add_argument('--preset', help='The FFmpeg video encoding preset. `medium` by default.', type=str, default='medium')
+parser.add_argument('-S', '--swap', help='Swap the primary and secondary vidoes, but keep everything else the same.', action='store_true')
+parser.add_argument('-V', '--video_bitrate', help='The bitrate of the ouput video. `2M` by default', type=str, default='2M')
+parser.add_argument('-A', '--audio_bitrate', help='The bitrate of the output audio. `192k` by default', type=str, default='192k')
+parser.add_argument('-p', '--preset', help='The FFmpeg video encoding preset. `medium` by default.', type=str, default='medium')
 parser.add_argument('-f', '--font_size', help='The subtitle font size, defaults to 16', type=str, default=16)
-parser.add_argument('--fps', help='The output video frame rate, defaults to 30.', type=int, default=30)
-parser.add_argument('--whisper_model', help='The OpenAI Whisper model to use. Defaults to `base`.', type=str, default='base')
-parser.add_argument('--max_words', help='The maximum number of words per line when automatically generating subtitles.', type=int, default=0)
-parser.add_argument('--set_dimensions', help='The dimensions of the output video, width x height. Default is 1080 1920', type=int, nargs=2, default=[1080, 1920])
+parser.add_argument('-r', '--fps', help='The output video frame rate, defaults to 30.', type=int, default=30)
+parser.add_argument('-M', '--whisper_model', help='The OpenAI Whisper model to use. Defaults to `base`.', type=str, default='base')
+parser.add_argument('-m', '--max_words', help='The maximum number of words per line when automatically generating subtitles.', type=int, default=0)
+parser.add_argument('-d', '--set_dimensions', help='The dimensions of the output video, width x height. Default is 1080 1920', type=int, nargs=2, default=[1080, 1920])
 args = parser.parse_args()
 
-OUPTUT_WIDTH = args.set_dimentions[0]
-OUPTUT_HEIGHT = args.set_dimentions[1]
+OUPTUT_WIDTH = args.set_dimensions[0]
+OUPTUT_HEIGHT = args.set_dimensions[1]
 OUTPUT_FILE_NAME = 'output.mp4'
 PRIMARY_FILE_PATH = args.primary_video
 SECONDARY_FILE_PATH = args.secondary_video
@@ -60,6 +61,7 @@ MODEL_NAME = args.whisper_model
 IS_HORIZONTAL = args.horizontal
 SUBTITLE_PATH = args.subtitle_path
 AUTOMATIC_SUBTITLES = args.automatic_subtitles
+SWAP_VIDEOS = args.swap
 
 PRIMARY_FILE_DIR, PRIMARY_FILE_NAME = os.path.split(PRIMARY_FILE_PATH)
 SECONDARY_FILE_DIR, SECONDARY_FILE_NAME = os.path.split(SECONDARY_FILE_PATH)
@@ -78,12 +80,15 @@ def clean_up(random):
 
 
 def create_audio(random):
+    global PRIMARY_FILE_PATH, SECONDARY_FILE_PATH
     # grab audio
     ff = FFmpeg(
         inputs={f'{PRIMARY_FILE_PATH}': '-y'},
         outputs={f'{PRIMARY_FILE_NAME[:-4]}_{random}_audio.mp3': '-q:a 0 -map a -preset fast'}
     )
     ff.run()
+    if SWAP_VIDEOS:
+        PRIMARY_FILE_PATH, SECONDARY_FILE_PATH = SECONDARY_FILE_PATH, PRIMARY_FILE_PATH  # swap videos
 
 
 def create_subtitles(model_name, random, threshold, max_words):
@@ -109,7 +114,11 @@ def create_vertical(random):
         output_options += f'[1] scale=-2:{math.trunc(OUTPUT_HEIGHT / 2) - ADDITIONAL_LENGTH}, crop={OUTPUT_WIDTH}:ih [secondary]; \
                         [primary][secondary] vstack=inputs=2 [outv];'
     
-    output_options += f'" -map [outv]:v -map 0:a -r {OUTPUT_FPS} -b:a {AUDIO_BITRATE} -b:v {VIDEO_BITRATE} -preset {RENDERING_PRESET}'
+    if SWAP_VIDEOS:
+        output_options += f'" -map [outv]:v -map 1:a -r {OUTPUT_FPS} -b:a {AUDIO_BITRATE} -b:v {VIDEO_BITRATE} -preset {RENDERING_PRESET}'
+    else:
+        output_options += f'" -map [outv]:v -map 0:a -r {OUTPUT_FPS} -b:a {AUDIO_BITRATE} -b:v {VIDEO_BITRATE} -preset {RENDERING_PRESET}'
+        
     
     ff = FFmpeg(
         inputs={f'{PRIMARY_FILE_PATH}': '-y', f'{SECONDARY_FILE_PATH}': None},
@@ -131,7 +140,10 @@ def create_horizontal(random):
     else:
         output_options += f'[combined] pad=w={OUTPUT_WIDTH}:h={OUTPUT_HEIGHT}:y=(oh-ih)/2:color=black [final];'
 
-    output_options += f'" -map [final]:v -map 0:a -r {OUTPUT_FPS} -b:a {AUDIO_BITRATE} -b:v {VIDEO_BITRATE} -preset {RENDERING_PRESET}'
+    if SWAP_VIDEOS:
+        output_options += f'" -map [final]:v -map 1:a -r {OUTPUT_FPS} -b:a {AUDIO_BITRATE} -b:v {VIDEO_BITRATE} -preset {RENDERING_PRESET} -shortest'
+    else:
+        output_options += f'" -map [final]:v -map 0:a -r {OUTPUT_FPS} -b:a {AUDIO_BITRATE} -b:v {VIDEO_BITRATE} -preset {RENDERING_PRESET}'
     ff = FFmpeg(
         inputs={f'{PRIMARY_FILE_PATH}': '-y', f'{SECONDARY_FILE_PATH}': None},
         outputs={   f'{OUTPUT_FILE_NAME[:-4]}_{random}.mp4': output_options}
@@ -151,7 +163,7 @@ try:
         create_horizontal(random_name)
     else:
         create_vertical(random_name)
-except:
-    print("An error occured")
+except Exception as error:
+    print("An error occured: ", error)
 finally:
     clean_up(random_name)
